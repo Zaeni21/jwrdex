@@ -99,20 +99,39 @@
     }
 
     async function addLiquidity() {
-      if (!signer) return alert("Connect wallet first");
-      const amtA = ethers.parseUnits(document.getElementById("amountA").value, 18);
-      const amtB = ethers.parseUnits(document.getElementById("amountB").value, 18);
-      const tokenA = new ethers.Contract(JWR, ABI_ERC20, signer);
-      const tokenB = new ethers.Contract(USDT, ABI_ERC20, signer);
-      const router = new ethers.Contract(ROUTER, ABI_ROUTER, signer);
-      if ((await tokenA.allowance(walletAddress, ROUTER)) < amtA) await tokenA.approve(ROUTER, amtA);
-      if ((await tokenB.allowance(walletAddress, ROUTER)) < amtB) await tokenB.approve(ROUTER, amtB);
-      const deadline = Math.floor(Date.now() / 1000) + 600;
-      await router.addLiquidity(JWR, USDT, amtA, amtB, 0, 0, walletAddress, deadline);
-      alert("Liquidity added");
-      updatePool();
-    }
+  if (!signer) return alert("Connect wallet dulu bro");
 
+  const valA = document.getElementById("amountA").value;
+  const valB = document.getElementById("amountB").value;
+
+  if (!valA || isNaN(valA) || !valB || isNaN(valB)) {
+    return alert("Masukin angka yang valid di kedua input");
+  }
+
+  const amtA = ethers.parseUnits(valA, 18);
+  const amtB = ethers.parseUnits(valB, 18);
+
+  const tokenA = new ethers.Contract(JWR, ABI_ERC20, signer);
+  const tokenB = new ethers.Contract(USDT, ABI_ERC20, signer);
+  const router = new ethers.Contract(ROUTER, ABI_ROUTER, signer);
+
+  try {
+    const allowanceA = await tokenA.allowance(walletAddress, ROUTER);
+    const allowanceB = await tokenB.allowance(walletAddress, ROUTER);
+
+    if (allowanceA < amtA) await tokenA.approve(ROUTER, amtA);
+    if (allowanceB < amtB) await tokenB.approve(ROUTER, amtB);
+
+    const deadline = Math.floor(Date.now() / 1000) + 600;
+    const tx = await router.addLiquidity(JWR, USDT, amtA, amtB, 0, 0, walletAddress, deadline);
+    await tx.wait();
+    alert("Liquidity added!");
+    updatePool();
+  } catch (err) {
+    console.error("Add liquidity error:", err);
+    alert("Gagal add liquidity: " + err.message);
+  }
+}
     async function swapTokens() {
       if (!signer) return alert("Connect wallet first");
       const from = document.getElementById("swapFrom").value;
