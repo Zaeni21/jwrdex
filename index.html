@@ -2,54 +2,117 @@
 <head>
   <meta charset="UTF-8">
   <title>JWR Mini DEX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
   <style>
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       background: linear-gradient(to bottom right, #0e0e1c, #1a1a2e);
       color: white;
       font-family: 'Segoe UI', sans-serif;
     }
-    .container { max-width: 960px; margin: auto; padding: 2rem; }
-    .tabs, .actions, .card { display: flex; flex-direction: column; align-items: center; }
-    .tabs { flex-direction: row; justify-content: center; gap: 12px; margin-bottom: 1rem; }
-    .tab { padding: 10px 20px; border-radius: 8px; background: #242442; cursor: pointer; }
-    .tab.active { background: #00f0ff; color: black; font-weight: bold; }
-    .card { background: #1b1b2f; padding: 1.5rem; border-radius: 16px; margin-top: 1rem; }
-    input, select, button {
-      width: 100%; padding: 0.75rem; margin-top: 0.5rem;
-      border-radius: 10px; border: none; background: #252540; color: white; font-size: 15px;
+    header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #12121c;
+      padding: 1rem;
+      border-bottom: 1px solid #2e2e4e;
     }
-    button { background: #00f0ff; color: black; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: #00e0ee; }
-    header { display: flex; justify-content: space-between; align-items: center; background: #12121c; padding: 1rem 2rem; }
-    .btn { background: #2b2b42; color: white; padding: 10px 16px; margin-left: 8px; border: none; border-radius: 8px; }
-    .btn:hover { background: #3f3f5e; }
-    .info { margin-top: 8px; font-size: 14px; color: #aaa; text-align: center; }
+    header h2 {
+      margin: 0;
+      margin-bottom: 0.5rem;
+    }
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      padding: 10px 16px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: none;
+      background: #2b2b42;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: #3f3f5e;
+    }
+    .container {
+      max-width: 900px;
+      margin: auto;
+      padding: 1rem;
+    }
+    .card {
+      background: #1b1b2f;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 1rem 0;
+    }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: none;
+      background: #252540;
+      color: white;
+      font-size: 15px;
+    }
+    .tab-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      background: #242442;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: #00f0ff;
+      color: black;
+    }
+    @media (min-width: 768px) {
+      header {
+        flex-direction: row;
+        justify-content: space-between;
+      }
+    }
   </style>
 </head>
 <body>
   <header>
-    <h2>JWR DEX</h2>
-    <div>
+    <h2>JWR Mini DEX</h2>
+    <div class="btn-group">
       <button class="btn" onclick="connectWallet()">Connect Wallet</button>
       <button class="btn" onclick="disconnectWallet()">Disconnect</button>
     </div>
   </header>  <div class="container">
-    <p id="walletAddress" style="text-align: center">Not connected</p>
-    <div class="tabs">
-      <div class="tab active" onclick="showTab('liquidity')">Add Liquidity</div>
-      <div class="tab" onclick="showTab('swap')">Swap</div>
-      <div class="tab" onclick="showTab('pool')">Pool</div>
-    </div><div id="liquidity" class="card">
+    <p id="walletAddress">Wallet: Not connected</p>
+    <p id="balance">Balance: -</p><div class="tab-buttons">
+  <div class="tab-btn active" onclick="showTab('liquidity')">Add Liquidity</div>
+  <div class="tab-btn" onclick="showTab('swap')">Swap</div>
+  <div class="tab-btn" onclick="showTab('pool')">Pool</div>
+</div>
+
+<div id="liquidity" class="card">
   <h3>Add Liquidity</h3>
-  <input id="amountA" placeholder="Amount JWR" />
-  <input id="amountB" placeholder="Amount USDT" />
-  <button onclick="addLiquidity()">Add Liquidity</button>
+  <input id="amountA" placeholder="Amount JWR">
+  <input id="amountB" placeholder="Amount USDT">
+  <button class="btn" onclick="addLiquidity()">Add Liquidity</button>
 </div>
 
 <div id="swap" class="card" style="display:none">
-  <h3>Swap Tokens</h3>
+  <h3>Swap</h3>
   <select id="swapFrom">
     <option value="0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3">JWR</option>
     <option value="0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf">USDT</option>
@@ -58,8 +121,8 @@
     <option value="0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3">JWR</option>
     <option value="0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf">USDT</option>
   </select>
-  <input id="swapAmount" placeholder="Amount to Swap" />
-  <button onclick="swapTokens()">Swap</button>
+  <input id="swapAmount" placeholder="Amount to Swap">
+  <button class="btn" onclick="swapTokens()">Swap</button>
 </div>
 
 <div id="pool" class="card" style="display:none">
@@ -68,56 +131,51 @@
   <p>Total USDT Liquidity: <span id="poolUSDT">-</span></p>
 </div>
 
-  </div>
-  <script>
+  </div>  <script>
     let provider, signer, account;
     const JWR = "0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3";
     const USDT = "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf";
     const ROUTER = "0xB91deeDbc60F3507D5206Df4E051A11b74C6158E";
     const ABI_ERC20 = ["function approve(address,uint) external returns (bool)","function allowance(address,address) view returns (uint256)","function balanceOf(address) view returns (uint256)"];
     const ABI_ROUTER = ["function swapExactTokensForTokens(uint,uint,address[],address,uint) external returns (uint[] memory)","function addLiquidity(address,address,uint,uint,uint,uint,address,uint) external returns (uint,uint,uint)"];
-    
+
     async function connectWallet() {
-    if (!window.ethereum) return alert("Please install MetaMask or OKX Wallet");
-    provider = new ethers.providers.Web3Provider(window.ethereum);
-
-    await provider.send("wallet_addEthereumChain", [{
-      chainId: '0x40d9',
-      chainName: '0G-Galileo-Testnet',
-      rpcUrls: ['https://evmrpc-testnet.0g.ai'],
-      nativeCurrency: { name: 'OG Token', symbol: 'OG', decimals: 18 },
-      blockExplorerUrls: ['https://chainscan-galileo.0g.ai/']
-    }]);
-
-    await provider.send("eth_requestAccounts", []);
-    signer = provider.getSigner();
-    walletAddress = await signer.getAddress();
-    contract = new ethers.Contract(contractAddress, abi, signer);
-
-    document.getElementById("walletAddress").textContent = walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
-    document.getElementById("connectBtn").classList.add("hidden");
-    document.getElementById("disconnectBtn").classList.remove("hidden");
-
-    const rawBal = await provider.getBalance(walletAddress);
-    balance = parseFloat(ethers.utils.formatEther(rawBal));
-    document.getElementById("walletBalance").textContent = `Balance: ${balance.toFixed(2)} 0G`;
-  }
+      const injected = window.okxwallet || window.ethereum;
+      if (!injected) return alert("Install MetaMask atau OKX Wallet dulu bro");
+      const chain = {
+        chainId: "0x40d1",
+        chainName: "0G Galileo",
+        nativeCurrency: { name: "OG", symbol: "OG", decimals: 18 },
+        rpcUrls: ["https://evmrpc-testnet.0g.ai/"]
+      };
+      try {
+        await injected.request({ method: "wallet_addEthereumChain", params: [chain] });
+        provider = new ethers.BrowserProvider(injected);
+        signer = await provider.getSigner();
+        account = await signer.getAddress();
+        document.getElementById("walletAddress").innerText = "Wallet: " + account;
+        const rawBal = await provider.getBalance(account);
+        const ethBal = ethers.formatEther(rawBal);
+        document.getElementById("balance").innerText = "Balance: " + parseFloat(ethBal).toFixed(4) + " OG";
+        updatePool();
+      } catch (err) {
+        alert("Gagal konek wallet: " + err.message);
+      }
+    }
 
     function disconnectWallet() {
-    provider = null;
-    signer = null;
-    walletAddress = null;
-    balance = 0;
+      provider = signer = account = null;
+      document.getElementById("walletAddress").innerText = "Wallet: Not connected";
+      document.getElementById("balance").innerText = "Balance: -";
+    }
 
-    document.getElementById("walletAddress").textContent = "-";
-    document.getElementById("walletBalance").textContent = "Balance: -";
-    document.getElementById("connectBtn").classList.remove("hidden");
-    document.getElementById("disconnectBtn").classList.add("hidden");
-
-    document.getElementById("amount").style.display = "none";
-    document.getElementById("slider").style.display = "none";
-    document.getElementById("percentageText").style.display = "none";
-  }
+    function showTab(tab) {
+      ["liquidity","swap","pool"].forEach(id => {
+        document.getElementById(id).style.display = (id === tab) ? "block" : "none";
+      });
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      event.target.classList.add('active');
+    }
 
     async function addLiquidity() {
       if (!signer) return alert("Connect wallet first");
@@ -144,14 +202,8 @@
       if ((await token.allowance(account, ROUTER)) < amt) await token.approve(ROUTER, amt);
       const deadline = Math.floor(Date.now() / 1000) + 600;
       await router.swapExactTokensForTokens(amt, 0, [from, to], account, deadline);
-      alert("Swap successful");
+      alert("Swap success");
       updatePool();
-    }
-
-    function showTab(id) {
-      ["liquidity","swap","pool"].forEach(x => document.getElementById(x).style.display = id===x ? 'block' : 'none');
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelector(`.tab[onclick*='${id}']`).classList.add('active');
     }
 
     async function updatePool() {
@@ -162,6 +214,5 @@
       document.getElementById("poolJWR").innerText = ethers.formatUnits(j, 18);
       document.getElementById("poolUSDT").innerText = ethers.formatUnits(u, 18);
     }
-  </script>
-</body>
+  </script></body>
 </html>
