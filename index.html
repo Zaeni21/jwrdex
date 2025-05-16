@@ -108,30 +108,37 @@
         alert("Gagal create pool: " + err.message);
       }
     }
+// Tambahkan bagian ini di atas fungsi addLiquidity()
+async function checkAndApprove(tokenAddress, spender, amount, signer) {
+  const token = new ethers.Contract(tokenAddress, erc20Abi, signer);
+  const allowance = await token.allowance(await signer.getAddress(), spender);
+  if (allowance.lt(amount)) {
+    const tx = await token.approve(spender, amount);
+    await tx.wait();
+    alert("Approval successful for " + tokenAddress);
+  }
+}
 
-    async function addLiquidity() {
-      const tokenA = document.getElementById("liqTokenA").value;
-      const tokenB = document.getElementById("liqTokenB").value;
-      const amountA = document.getElementById("amountA").value;
-      const amountB = document.getElementById("amountB").value;
+// Fungsi addLiquidity yang diperbaiki
+async function addLiquidity() {
+  if (!poolContract || !signer) return alert("Wallet not connected");
+  const token0 = document.getElementById("token0").value;
+  const token1 = document.getElementById("token1").value;
+  const amount0 = ethers.parseUnits(document.getElementById("amount0").value, 18);
+  const amount1 = ethers.parseUnits(document.getElementById("amount1").value, 18);
 
-      const factory = new ethers.Contract(FACTORY, ABI_FACTORY, signer);
-      const poolAddr = await factory.getPool(tokenA, tokenB);
-      if (!poolAddr || poolAddr === ethers.ZeroAddress) return alert("Pool belum ada");
+  try {
+    await checkAndApprove(token0, poolContract.target, amount0, signer);
+    await checkAndApprove(token1, poolContract.target, amount1, signer);
 
-      const tokenAContract = new ethers.Contract(tokenA, ABI_ERC20, signer);
-      const tokenBContract = new ethers.Contract(tokenB, ABI_ERC20, signer);
-      await tokenAContract.approve(poolAddr, ethers.parseUnits(amountA, 18));
-      await tokenBContract.approve(poolAddr, ethers.parseUnits(amountB, 18));
-
-      const pool = new ethers.Contract(poolAddr, ABI_POOL, signer);
-      const tx = await pool.addLiquidity(
-        ethers.parseUnits(amountA, 18),
-        ethers.parseUnits(amountB, 18)
-      );
-      await tx.wait();
-      alert("Liquidity berhasil ditambahkan!");
-    }
+    const tx = await poolContract.addLiquidity(amount0, amount1);
+    await tx.wait();
+    alert("Liquidity added successfully");
+  } catch (err) {
+    console.error("Add liquidity failed:", err);
+    alert("Add liquidity failed: " + err.message);
+  }
+}
 
     function showTab(id) {
       ["liquidity","swap","pool"].forEach(x => document.getElementById(x).classList.add("hidden"));
