@@ -4,47 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>JWR DEX</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js">
-async function checkAndApprove(tokenAddress, spender, amount, signer) {
-  const token = new ethers.Contract(tokenAddress, ABI_ERC20, signer);
-  const allowance = await token.allowance(await signer.getAddress(), spender);
-  if (allowance.lt(amount)) {
-    const tx = await token.approve(spender, amount);
-    await tx.wait();
-    console.log("✅ Approved:", tokenAddress);
-  }
-}
-
-async function addLiquidity() {
-  const tokenA = document.getElementById("liqTokenA").value;
-  const tokenB = document.getElementById("liqTokenB").value;
-  const amountA = document.getElementById("amountA").value;
-  const amountB = document.getElementById("amountB").value;
-
-  if (!signer || !walletAddress) return alert("Wallet belum connect!");
-
-  const amtA = ethers.parseUnits(amountA, 18);
-  const amtB = ethers.parseUnits(amountB, 18);
-
-  const factory = new ethers.Contract(FACTORY, ABI_FACTORY, signer);
-  const poolAddress = await factory.getPool(tokenA, tokenB);
-
-  if (!poolAddress || poolAddress === '0x0000000000000000000000000000000000000000') {
-    return alert("Pool belum tersedia");
-  }
-
-  const poolContract = new ethers.Contract(poolAddress, ABI_POOL, signer);
-
-  await checkAndApprove(tokenA, poolAddress, amtA, signer);
-  await checkAndApprove(tokenB, poolAddress, amtB, signer);
-
-  const tx = await poolContract.addLiquidity(amtA, amtB);
-  await tx.wait();
-
-  alert("✅ Liquidity berhasil ditambahkan!");
-}
-
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-900 text-white font-sans min-h-screen">
@@ -149,7 +109,14 @@ async function addLiquidity() {
       }
     }
 // Tambahkan bagian ini di atas fungsi addLiquidity()
-
+async function checkAndApprove(tokenAddress, spender, amount, signer) {
+  const token = new ethers.Contract(tokenAddress, ABI_ERC20, signer);
+  const allowance = await token.allowance(await signer.getAddress(), spender);
+  if (allowance.lt(amount)) {
+    const tx = await token.approve(spender, amount);
+    await tx.wait();
+    console.log("Approved", tokenAddress);
+  }
 }
 
 // Fungsi addLiquidity yang diperbaiki
@@ -189,46 +156,6 @@ async function addLiquidity() {
       document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("bg-blue-500"));
       event.target.classList.add("bg-blue-500");
     }
-  
-async function checkAndApprove(tokenAddress, spender, amount, signer) {
-  const token = new ethers.Contract(tokenAddress, ABI_ERC20, signer);
-  const allowance = await token.allowance(await signer.getAddress(), spender);
-  if (allowance.lt(amount)) {
-    const tx = await token.approve(spender, amount);
-    await tx.wait();
-    console.log("✅ Approved:", tokenAddress);
-  }
-}
-
-async function addLiquidity() {
-  const tokenA = document.getElementById("liqTokenA").value;
-  const tokenB = document.getElementById("liqTokenB").value;
-  const amountA = document.getElementById("amountA").value;
-  const amountB = document.getElementById("amountB").value;
-
-  if (!signer || !walletAddress) return alert("Wallet belum connect!");
-
-  const amtA = ethers.parseUnits(amountA, 18);
-  const amtB = ethers.parseUnits(amountB, 18);
-
-  const factory = new ethers.Contract(FACTORY, ABI_FACTORY, signer);
-  const poolAddress = await factory.getPool(tokenA, tokenB);
-
-  if (!poolAddress || poolAddress === '0x0000000000000000000000000000000000000000') {
-    return alert("Pool belum tersedia");
-  }
-
-  const poolContract = new ethers.Contract(poolAddress, ABI_POOL, signer);
-
-  await checkAndApprove(tokenA, poolAddress, amtA, signer);
-  await checkAndApprove(tokenB, poolAddress, amtB, signer);
-
-  const tx = await poolContract.addLiquidity(amtA, amtB);
-  await tx.wait();
-
-  alert("✅ Liquidity berhasil ditambahkan!");
-}
-
-</script>
+  </script>
 </body>
 </html>
