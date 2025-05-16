@@ -121,23 +121,41 @@ async function checkAndApprove(tokenAddress, spender, amount, signer) {
 
 // Fungsi addLiquidity yang diperbaiki
 async function addLiquidity() {
-  if (!poolContract || !signer) return alert("Wallet not connected");
-  const token0 = document.getElementById("token0").value;
-  const token1 = document.getElementById("token1").value;
-  const amount0 = ethers.parseUnits(document.getElementById("amount0").value, 18);
-  const amount1 = ethers.parseUnits(document.getElementById("amount1").value, 18);
+  const tokenA = document.getElementById("liqTokenA").value;
+  const tokenB = document.getElementById("liqTokenB").value;
+  const amountA = document.getElementById("liqAmount0").value;
+  const amountB = document.getElementById("liqAmount1").value;
 
-  try {
-    await checkAndApprove(token0, poolContract.target, amount0, signer);
-    await checkAndApprove(token1, poolContract.target, amount1, signer);
+  const factory = new ethers.Contract(FACTORY, ABI_FACTORY, signer);
+  const poolAddress = await factory.getPool(tokenA, tokenB);
 
-    const tx = await poolContract.addLiquidity(amount0, amount1);
-    await tx.wait();
-    alert("Liquidity added successfully");
-  } catch (err) {
-    console.error("Add liquidity failed:", err);
-    alert("Add liquidity failed: " + err.message);
+  if (!poolAddress || poolAddress === ethers.ZeroAddress) {
+    return alert("Pool belum tersedia");
   }
+
+  const poolContract = new ethers.Contract(poolAddress, ABI_POOL, signer);
+  const tokenAContract = new ethers.Contract(tokenA, ABI_ERC20, signer);
+  const tokenBContract = new ethers.Contract(tokenB, ABI_ERC20, signer);
+
+  const amtA = ethers.parseUnits(amountA, 18);
+  const amtB = ethers.parseUnits(amountB, 18);
+
+  const allowanceA = await tokenAContract.allowance(walletAddress, poolAddress);
+  const allowanceB = await tokenBContract.allowance(walletAddress, poolAddress);
+
+  if (allowanceA.lt(amtA)) {
+    const txA = await tokenAContract.approve(poolAddress, amtA);
+    await txA.wait();
+  }
+
+  if (allowanceB.lt(amtB)) {
+    const txB = await tokenBContract.approve(poolAddress, amtB);
+    await txB.wait();
+  }
+
+  const tx = await poolContract.addLiquidity(amtA, amtB);
+  await tx.wait();
+  alert("Liquidity berhasil ditambahkan!");
 }
 
     function showTab(id) {
