@@ -1,8 +1,8 @@
 <!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>JWR Mini DEX</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JWR Mini DEX</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; }
@@ -14,7 +14,7 @@
     }
     header {
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
       align-items: center;
       background: #12121c;
       padding: 1rem;
@@ -22,25 +22,18 @@
     }
     header h2 {
       margin: 0;
-      margin-bottom: 0.5rem;
+      font-size: 1.5rem;
     }
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .btn {
-      padding: 10px 16px;
-      font-size: 14px;
-      border-radius: 8px;
+    .wallet-btn {
+      padding: 6px 10px;
+      font-size: 13px;
+      border-radius: 6px;
       border: none;
       background: #2b2b42;
       color: white;
       cursor: pointer;
-      transition: background 0.2s;
     }
-    .btn:hover {
+    .wallet-btn:hover {
       background: #3f3f5e;
     }
     .container {
@@ -81,21 +74,12 @@
       background: #00f0ff;
       color: black;
     }
-    @media (min-width: 768px) {
-      header {
-        flex-direction: row;
-        justify-content: space-between;
-      }
-    }
   </style>
 </head>
 <body>
   <header>
     <h2>JWR Mini DEX</h2>
-    <div class="btn-group">
-      <button class="btn" onclick="connectWallet()">Connect Wallet</button>
-      <button class="btn" onclick="disconnectWallet()">Disconnect</button>
-    </div>
+    <button class="wallet-btn" id="walletBtn" onclick="handleWallet()">Connect Wallet</button>
   </header>  <div class="container">
     <p id="walletAddress">Wallet: Not connected</p>
     <p id="balance">Balance: -</p><div class="tab-buttons">
@@ -108,7 +92,7 @@
   <h3>Add Liquidity</h3>
   <input id="amountA" placeholder="Amount JWR">
   <input id="amountB" placeholder="Amount USDT">
-  <button class="btn" onclick="addLiquidity()">Add Liquidity</button>
+  <button class="wallet-btn" onclick="addLiquidity()">Add Liquidity</button>
 </div>
 
 <div id="swap" class="card" style="display:none">
@@ -122,7 +106,7 @@
     <option value="0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf">USDT</option>
   </select>
   <input id="swapAmount" placeholder="Amount to Swap">
-  <button class="btn" onclick="swapTokens()">Swap</button>
+  <button class="wallet-btn" onclick="swapTokens()">Swap</button>
 </div>
 
 <div id="pool" class="card" style="display:none">
@@ -138,6 +122,11 @@
     const ROUTER = "0xB91deeDbc60F3507D5206Df4E051A11b74C6158E";
     const ABI_ERC20 = ["function approve(address,uint) external returns (bool)","function allowance(address,address) view returns (uint256)","function balanceOf(address) view returns (uint256)"];
     const ABI_ROUTER = ["function swapExactTokensForTokens(uint,uint,address[],address,uint) external returns (uint[] memory)","function addLiquidity(address,address,uint,uint,uint,uint,address,uint) external returns (uint,uint,uint)"];
+
+    async function handleWallet() {
+      if (account) return disconnectWallet();
+      await connectWallet();
+    }
 
     async function connectWallet() {
       const injected = window.okxwallet || window.ethereum;
@@ -155,8 +144,8 @@
         account = await signer.getAddress();
         document.getElementById("walletAddress").innerText = "Wallet: " + account;
         const rawBal = await provider.getBalance(account);
-        const ethBal = ethers.formatEther(rawBal);
-        document.getElementById("balance").innerText = "Balance: " + parseFloat(ethBal).toFixed(4) + " OG";
+        document.getElementById("balance").innerText = "Balance: " + parseFloat(ethers.formatEther(rawBal)).toFixed(4) + " OG";
+        document.getElementById("walletBtn").innerText = "Disconnect";
         updatePool();
       } catch (err) {
         alert("Gagal konek wallet: " + err.message);
@@ -167,6 +156,7 @@
       provider = signer = account = null;
       document.getElementById("walletAddress").innerText = "Wallet: Not connected";
       document.getElementById("balance").innerText = "Balance: -";
+      document.getElementById("walletBtn").innerText = "Connect Wallet";
     }
 
     function showTab(tab) {
