@@ -104,9 +104,20 @@
   }
 
     function disconnectWallet() {
-      provider = signer = account = null;
-      document.getElementById("walletAddress").innerText = "Not connected";
-    }
+    provider = null;
+    signer = null;
+    walletAddress = null;
+    balance = 0;
+
+    document.getElementById("walletAddress").textContent = "-";
+    document.getElementById("walletBalance").textContent = "Balance: -";
+    document.getElementById("connectBtn").classList.remove("hidden");
+    document.getElementById("disconnectBtn").classList.add("hidden");
+
+    document.getElementById("amount").style.display = "none";
+    document.getElementById("slider").style.display = "none";
+    document.getElementById("percentageText").style.display = "none";
+  }
 
     async function addLiquidity() {
       if (!signer) return alert("Connect wallet first");
