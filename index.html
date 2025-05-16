@@ -134,9 +134,9 @@ async function addLiquidity() {
   const factory = new ethers.Contract(FACTORY, ABI_FACTORY, signer);
   const poolAddress = await factory.getPool(tokenA, tokenB);
 
-  if (!poolAddress || poolAddress === ethers.ZeroAddress) {
-    return alert("Pool belum tersedia");
-  }
+  if (!poolAddress || poolAddress === '0x0000000000000000000000000000000000000000') {
+  return alert("Pool belum tersedia");
+}
 
   const poolContract = new ethers.Contract(poolAddress, ABI_POOL, signer);
 
