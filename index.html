@@ -2,128 +2,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JWR Mini DEX</title>
+  <title>JWR DEX</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: linear-gradient(to bottom right, #0e0e1c, #1a1a2e);
-      color: white;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #12121c;
-      padding: 1rem;
-      border-bottom: 1px solid #2e2e4e;
-    }
-    header h2 {
-      margin: 0;
-      font-size: 1.5rem;
-    }
-    .wallet-btn {
-      padding: 6px 10px;
-      font-size: 13px;
-      border-radius: 6px;
-      border: none;
-      background: #2b2b42;
-      color: white;
-      cursor: pointer;
-    }
-    .wallet-btn:hover {
-      background: #3f3f5e;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 1rem;
-    }
-    .card {
-      background: #1b1b2f;
-      padding: 20px;
-      border-radius: 12px;
-      margin: 1rem 0;
-    }
-    input, select {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border-radius: 8px;
-      border: none;
-      background: #252540;
-      color: white;
-      font-size: 15px;
-    }
-    .tab-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-    }
-    .tab-btn {
-      padding: 8px 16px;
-      border-radius: 8px;
-      background: #242442;
-      cursor: pointer;
-    }
-    .tab-btn.active {
-      background: #00f0ff;
-      color: black;
-    }
-  </style>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body>
-  <header>
-    <h2>JWR Mini DEX</h2>
-    <div class="space-x-2">
-          <span id="walletStatus">
-            <span id="connectBtn" class="text-blue-600 font-medium cursor-pointer" onclick="connectWallet()">Connect</span>
-            <span id="disconnectBtn" class="text-red-600 font-medium cursor-pointer hidden" onclick="disconnectWallet()">Disconnect</span>
-          </span>
-        </div>
-      </div>
-      <p id="walletBalance" class="text-sm text-gray-500 mt-1">Balance: -</p>
-</div>
-    <div class="tab-buttons">
-  <div class="tab-btn active" onclick="showTab('liquidity')">Add Liquidity</div>
-  <div class="tab-btn" onclick="showTab('swap')">Swap</div>
-  <div class="tab-btn" onclick="showTab('pool')">Pool</div>
+<body class="bg-gray-900 text-white font-sans min-h-screen">
+  <header class="flex justify-between items-center p-4 border-b border-gray-700">
+    <h1 class="text-xl font-bold text-blue-400">JWR Mini DEX</h1>
+    <div id="walletStatus">
+      <span id="connectBtn" class="text-sm px-3 py-1 bg-blue-600 rounded cursor-pointer" onclick="connectWallet()">Connect</span>
+    </div>
+  </header>  <main class="p-4 max-w-xl mx-auto space-y-6">
+    <p id="walletBalance">Balance: -</p><div class="flex justify-center space-x-2">
+  <button class="tab-btn px-4 py-2 bg-gray-700 rounded active" onclick="showTab('liquidity')">Add Liquidity</button>
+  <button class="tab-btn px-4 py-2 bg-gray-700 rounded" onclick="showTab('swap')">Swap</button>
+  <button class="tab-btn px-4 py-2 bg-gray-700 rounded" onclick="showTab('pool')">Pool</button>
 </div>
 
-<div id="liquidity" class="card">
-  <h3>Add Liquidity</h3>
-  <input id="amountA" placeholder="Amount JWR">
-  <input id="amountB" placeholder="Amount USDT">
-  <button class="wallet-btn" onclick="addLiquidity()">Add Liquidity</button>
+<div id="liquidity" class="bg-gray-800 p-4 rounded">
+  <h3 class="text-lg font-semibold mb-2">Add Liquidity</h3>
+  <input id="amountA" class="w-full p-2 mb-2 rounded bg-gray-700" placeholder="Amount JWR">
+  <input id="amountB" class="w-full p-2 mb-2 rounded bg-gray-700" placeholder="Amount USDT">
+  <button class="w-full py-2 bg-blue-500 rounded" onclick="addLiquidity()">Add Liquidity</button>
 </div>
 
-<div id="swap" class="card" style="display:none">
-  <h3>Swap</h3>
-  <select id="swapFrom">
+<div id="swap" class="bg-gray-800 p-4 rounded hidden">
+  <h3 class="text-lg font-semibold mb-2">Swap</h3>
+  <select id="swapFrom" class="w-full p-2 mb-2 rounded bg-gray-700">
     <option value="0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3">JWR</option>
     <option value="0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf">USDT</option>
   </select>
-  <select id="swapTo">
-    <option value="0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3">JWR</option>
+  <select id="swapTo" class="w-full p-2 mb-2 rounded bg-gray-700">
     <option value="0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf">USDT</option>
+    <option value="0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3">JWR</option>
   </select>
-  <input id="swapAmount" placeholder="Amount to Swap">
-  <button class="wallet-btn" onclick="swapTokens()">Swap</button>
+  <input id="swapAmount" class="w-full p-2 mb-2 rounded bg-gray-700" placeholder="Amount to Swap">
+  <button class="w-full py-2 bg-green-500 rounded" onclick="swapTokens()">Swap</button>
 </div>
 
-<div id="pool" class="card" style="display:none">
-  <h3>Pool Info</h3>
+<div id="pool" class="bg-gray-800 p-4 rounded hidden">
+  <h3 class="text-lg font-semibold mb-2">Pool Info</h3>
   <p>Total JWR Liquidity: <span id="poolJWR">-</span></p>
   <p>Total USDT Liquidity: <span id="poolUSDT">-</span></p>
 </div>
 
-  </div> 
-    <script>
-    let provider, signer, account;
+  </main>  <script>
+    let provider, signer, walletAddress;
     const JWR = "0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3";
     const USDT = "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf";
     const ROUTER = "0xB91deeDbc60F3507D5206Df4E051A11b74C6158E";
@@ -131,56 +55,60 @@
     const ABI_ROUTER = ["function swapExactTokensForTokens(uint,uint,address[],address,uint) external returns (uint[] memory)","function addLiquidity(address,address,uint,uint,uint,uint,address,uint) external returns (uint,uint,uint)"];
 
     async function connectWallet() {
-    if (!window.ethereum) return alert("Please install MetaMask or OKX Wallet");
-    provider = new ethers.providers.Web3Provider(window.ethereum);
+      const injected = window.okxwallet || window.ethereum;
+      if (!injected) return alert("Install MetaMask atau OKX Wallet dulu bro");
+      try {
+        provider = new ethers.BrowserProvider(injected);
+        signer = await provider.getSigner();
+        walletAddress = await signer.getAddress();
 
-    await provider.send("wallet_addEthereumChain", [{
-      chainId: '0x40d9',
-      chainName: '0G-Galileo-Testnet',
-      rpcUrls: ['https://evmrpc-testnet.0g.ai'],
-      nativeCurrency: { name: 'OG Token', symbol: 'OG', decimals: 18 },
-      blockExplorerUrls: ['https://chainscan-galileo.0g.ai/']
-    }]);
+        await provider.send("wallet_addEthereumChain", [{
+          chainId: '0x40d9',
+          chainName: '0G-Galileo-Testnet',
+          rpcUrls: ['https://evmrpc-testnet.0g.ai'],
+          nativeCurrency: { name: 'OG Token', symbol: 'OG', decimals: 18 },
+          blockExplorerUrls: ['https://chainscan-galileo.0g.ai/']
+        }]);
 
-    await provider.send("eth_requestAccounts", []);
-    signer = provider.getSigner();
-    walletAddress = await signer.getAddress();
-    contract = new ethers.Contract(contractAddress, abi, signer);
+        const rawBal = await provider.getBalance(walletAddress);
+        const ethBal = ethers.formatEther(rawBal);
+        document.getElementById("walletBalance").innerText = `Balance: ${parseFloat(ethBal).toFixed(4)} OG`;
 
-    document.getElementById("walletAddress").textContent = walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
-    document.getElementById("connectBtn").classList.add("hidden");
-    document.getElementById("disconnectBtn").classList.remove("hidden");
+        document.getElementById("walletStatus").innerHTML = `
+          <span class='text-green-400 text-sm'>${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}</span>
+          <span class='text-red-400 ml-2 cursor-pointer text-sm' onclick='disconnectWallet()'>Disconnect</span>`;
 
-    const rawBal = await provider.getBalance(walletAddress);
-    balance = parseFloat(ethers.utils.formatEther(rawBal));
-    document.getElementById("walletBalance").textContent = `Balance: ${balance.toFixed(2)} 0G`;
+        updatePool();
+      } catch (err) {
+        alert("Gagal konek wallet: " + err.message);
+      }
     }
+
     function disconnectWallet() {
-      provider = signer = account = null;
-      document.getElementById("walletAddress").innerText = "Wallet: Not connected";
-      document.getElementById("balance").innerText = "Balance: -";
-      document.getElementById("walletBtn").innerText = "Connect Wallet";
+      provider = signer = walletAddress = null;
+      document.getElementById("walletStatus").innerHTML = `
+        <span id='connectBtn' class='text-sm px-3 py-1 bg-blue-600 rounded cursor-pointer' onclick='connectWallet()'>Connect</span>`;
+      document.getElementById("walletBalance").innerText = "Balance: -";
     }
 
-    function showTab(tab) {
-      ["liquidity","swap","pool"].forEach(id => {
-        document.getElementById(id).style.display = (id === tab) ? "block" : "none";
-      });
-      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-      event.target.classList.add('active');
+    function showTab(id) {
+      ["liquidity","swap","pool"].forEach(x => document.getElementById(x).classList.add("hidden"));
+      document.getElementById(id).classList.remove("hidden");
+      document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("bg-blue-500"));
+      event.target.classList.add("bg-blue-500");
     }
 
     async function addLiquidity() {
       if (!signer) return alert("Connect wallet first");
-      const a = ethers.parseUnits(document.getElementById("amountA").value, 18);
-      const b = ethers.parseUnits(document.getElementById("amountB").value, 18);
+      const amtA = ethers.parseUnits(document.getElementById("amountA").value, 18);
+      const amtB = ethers.parseUnits(document.getElementById("amountB").value, 18);
       const tokenA = new ethers.Contract(JWR, ABI_ERC20, signer);
       const tokenB = new ethers.Contract(USDT, ABI_ERC20, signer);
       const router = new ethers.Contract(ROUTER, ABI_ROUTER, signer);
-      if ((await tokenA.allowance(account, ROUTER)) < a) await tokenA.approve(ROUTER, a);
-      if ((await tokenB.allowance(account, ROUTER)) < b) await tokenB.approve(ROUTER, b);
+      if ((await tokenA.allowance(walletAddress, ROUTER)) < amtA) await tokenA.approve(ROUTER, amtA);
+      if ((await tokenB.allowance(walletAddress, ROUTER)) < amtB) await tokenB.approve(ROUTER, amtB);
       const deadline = Math.floor(Date.now() / 1000) + 600;
-      await router.addLiquidity(JWR, USDT, a, b, 0, 0, account, deadline);
+      await router.addLiquidity(JWR, USDT, amtA, amtB, 0, 0, walletAddress, deadline);
       alert("Liquidity added");
       updatePool();
     }
@@ -192,20 +120,20 @@
       const amt = ethers.parseUnits(document.getElementById("swapAmount").value, 18);
       const token = new ethers.Contract(from, ABI_ERC20, signer);
       const router = new ethers.Contract(ROUTER, ABI_ROUTER, signer);
-      if ((await token.allowance(account, ROUTER)) < amt) await token.approve(ROUTER, amt);
+      if ((await token.allowance(walletAddress, ROUTER)) < amt) await token.approve(ROUTER, amt);
       const deadline = Math.floor(Date.now() / 1000) + 600;
-      await router.swapExactTokensForTokens(amt, 0, [from, to], account, deadline);
+      await router.swapExactTokensForTokens(amt, 0, [from, to], walletAddress, deadline);
       alert("Swap success");
       updatePool();
     }
 
     async function updatePool() {
-      const a = new ethers.Contract(JWR, ABI_ERC20, provider);
-      const b = new ethers.Contract(USDT, ABI_ERC20, provider);
-      const j = await a.balanceOf(ROUTER);
-      const u = await b.balanceOf(ROUTER);
-      document.getElementById("poolJWR").innerText = ethers.formatUnits(j, 18);
-      document.getElementById("poolUSDT").innerText = ethers.formatUnits(u, 18);
+      const tokenA = new ethers.Contract(JWR, ABI_ERC20, provider);
+      const tokenB = new ethers.Contract(USDT, ABI_ERC20, provider);
+      const a = await tokenA.balanceOf(ROUTER);
+      const b = await tokenB.balanceOf(ROUTER);
+      document.getElementById("poolJWR").innerText = ethers.formatUnits(a, 18);
+      document.getElementById("poolUSDT").innerText = ethers.formatUnits(b, 18);
     }
   </script></body>
 </html>
