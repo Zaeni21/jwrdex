@@ -79,10 +79,16 @@
 <body>
   <header>
     <h2>JWR Mini DEX</h2>
-    <button class="wallet-btn" id="walletBtn" onclick="handleWallet()">Connect Wallet</button>
-  </header>  <div class="container">
-    <p id="walletAddress">Wallet: Not connected</p>
-    <p id="balance">Balance: -</p><div class="tab-buttons">
+    <div class="space-x-2">
+          <span id="walletStatus">
+            <span id="connectBtn" class="text-blue-600 font-medium cursor-pointer" onclick="connectWallet()">Connect</span>
+            <span id="disconnectBtn" class="text-red-600 font-medium cursor-pointer hidden" onclick="disconnectWallet()">Disconnect</span>
+          </span>
+        </div>
+      </div>
+      <p id="walletBalance" class="text-sm text-gray-500 mt-1">Balance: -</p>
+</div>
+    <div class="tab-buttons">
   <div class="tab-btn active" onclick="showTab('liquidity')">Add Liquidity</div>
   <div class="tab-btn" onclick="showTab('swap')">Swap</div>
   <div class="tab-btn" onclick="showTab('pool')">Pool</div>
@@ -115,7 +121,8 @@
   <p>Total USDT Liquidity: <span id="poolUSDT">-</span></p>
 </div>
 
-  </div>  <script>
+  </div> 
+    <script>
     let provider, signer, account;
     const JWR = "0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3";
     const USDT = "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf";
@@ -123,35 +130,31 @@
     const ABI_ERC20 = ["function approve(address,uint) external returns (bool)","function allowance(address,address) view returns (uint256)","function balanceOf(address) view returns (uint256)"];
     const ABI_ROUTER = ["function swapExactTokensForTokens(uint,uint,address[],address,uint) external returns (uint[] memory)","function addLiquidity(address,address,uint,uint,uint,uint,address,uint) external returns (uint,uint,uint)"];
 
-    async function handleWallet() {
-      if (account) return disconnectWallet();
-      await connectWallet();
-    }
-
     async function connectWallet() {
-      const injected = window.okxwallet || window.ethereum;
-      if (!injected) return alert("Install MetaMask atau OKX Wallet dulu bro");
-      const chain = {
-        chainId: "0x40d1",
-        chainName: "0G Galileo",
-        nativeCurrency: { name: "OG", symbol: "OG", decimals: 18 },
-        rpcUrls: ["https://evmrpc-testnet.0g.ai/"]
-      };
-      try {
-        await injected.request({ method: "wallet_addEthereumChain", params: [chain] });
-        provider = new ethers.BrowserProvider(injected);
-        signer = await provider.getSigner();
-        account = await signer.getAddress();
-        document.getElementById("walletAddress").innerText = "Wallet: " + account;
-        const rawBal = await provider.getBalance(account);
-        document.getElementById("balance").innerText = "Balance: " + parseFloat(ethers.formatEther(rawBal)).toFixed(4) + " OG";
-        document.getElementById("walletBtn").innerText = "Disconnect";
-        updatePool();
-      } catch (err) {
-        alert("Gagal konek wallet: " + err.message);
-      }
-    }
+    if (!window.ethereum) return alert("Please install MetaMask or OKX Wallet");
+    provider = new ethers.providers.Web3Provider(window.ethereum);
 
+    await provider.send("wallet_addEthereumChain", [{
+      chainId: '0x40d9',
+      chainName: '0G-Galileo-Testnet',
+      rpcUrls: ['https://evmrpc-testnet.0g.ai'],
+      nativeCurrency: { name: 'OG Token', symbol: 'OG', decimals: 18 },
+      blockExplorerUrls: ['https://chainscan-galileo.0g.ai/']
+    }]);
+
+    await provider.send("eth_requestAccounts", []);
+    signer = provider.getSigner();
+    walletAddress = await signer.getAddress();
+    contract = new ethers.Contract(contractAddress, abi, signer);
+
+    document.getElementById("walletAddress").textContent = walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
+    document.getElementById("connectBtn").classList.add("hidden");
+    document.getElementById("disconnectBtn").classList.remove("hidden");
+
+    const rawBal = await provider.getBalance(walletAddress);
+    balance = parseFloat(ethers.utils.formatEther(rawBal));
+    document.getElementById("walletBalance").textContent = `Balance: ${balance.toFixed(2)} 0G`;
+    }
     function disconnectWallet() {
       provider = signer = account = null;
       document.getElementById("walletAddress").innerText = "Wallet: Not connected";
