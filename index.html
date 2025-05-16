@@ -110,12 +110,12 @@
     }
 // Tambahkan bagian ini di atas fungsi addLiquidity()
 async function checkAndApprove(tokenAddress, spender, amount, signer) {
-  const token = new ethers.Contract(tokenAddress, erc20Abi, signer);
+  const token = new ethers.Contract(tokenAddress, ABI_ERC20, signer);
   const allowance = await token.allowance(await signer.getAddress(), spender);
   if (allowance.lt(amount)) {
     const tx = await token.approve(spender, amount);
     await tx.wait();
-    alert("Approval successful for " + tokenAddress);
+    console.log("Approved", tokenAddress);
   }
 }
 
@@ -126,6 +126,11 @@ async function addLiquidity() {
   const amountA = document.getElementById("liqAmount0").value;
   const amountB = document.getElementById("liqAmount1").value;
 
+  if (!signer || !walletAddress) return alert("Wallet belum connect!");
+
+  const amtA = ethers.parseUnits(amountA, 18);
+  const amtB = ethers.parseUnits(amountB, 18);
+
   const factory = new ethers.Contract(FACTORY, ABI_FACTORY, signer);
   const poolAddress = await factory.getPool(tokenA, tokenB);
 
@@ -134,25 +139,12 @@ async function addLiquidity() {
   }
 
   const poolContract = new ethers.Contract(poolAddress, ABI_POOL, signer);
-  const tokenAContract = new ethers.Contract(tokenA, ABI_ERC20, signer);
-  const tokenBContract = new ethers.Contract(tokenB, ABI_ERC20, signer);
 
-  const amtA = ethers.parseUnits(amountA, 18);
-  const amtB = ethers.parseUnits(amountB, 18);
+  // Panggil helper approve-nya langsung
+  await checkAndApprove(tokenA, poolAddress, amtA, signer);
+  await checkAndApprove(tokenB, poolAddress, amtB, signer);
 
-  const allowanceA = await tokenAContract.allowance(walletAddress, poolAddress);
-  const allowanceB = await tokenBContract.allowance(walletAddress, poolAddress);
-
-  if (allowanceA.lt(amtA)) {
-    const txA = await tokenAContract.approve(poolAddress, amtA);
-    await txA.wait();
-  }
-
-  if (allowanceB.lt(amtB)) {
-    const txB = await tokenBContract.approve(poolAddress, amtB);
-    await txB.wait();
-  }
-
+  // Add liquidity
   const tx = await poolContract.addLiquidity(amtA, amtB);
   await tx.wait();
   alert("Liquidity berhasil ditambahkan!");
