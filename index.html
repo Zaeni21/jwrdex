@@ -1,131 +1,169 @@
+// Updated HTML with Swap Estimation
+
 <!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>JWR DEX</title>
+  <meta charset="UTF-8">
+  <title>JWR Mini DEX</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>
     body {
-      background: #0f0f0f;
+      margin: 0;
+      background: linear-gradient(to bottom right, #0e0e1c, #1a1a2e);
       color: white;
-      font-family: sans-serif;
-      text-align: center;
-      padding-top: 40px;
+      font-family: 'Segoe UI', sans-serif;
     }
+    .container { max-width: 960px; margin: auto; padding: 2rem; }
+    .tabs, .actions, .card { display: flex; flex-direction: column; align-items: center; }
+    .tabs { flex-direction: row; justify-content: center; gap: 12px; margin-bottom: 1rem; }
+    .tab { padding: 10px 20px; border-radius: 8px; background: #242442; cursor: pointer; }
+    .tab.active { background: #00f0ff; color: black; font-weight: bold; }
+    .card { background: #1b1b2f; padding: 1.5rem; border-radius: 16px; margin-top: 1rem; }
     input, select, button {
-      margin: 8px;
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
+      width: 100%; padding: 0.75rem; margin-top: 0.5rem;
+      border-radius: 10px; border: none; background: #252540; color: white; font-size: 15px;
     }
-    .card {
-      background: #1c1c1c;
-      padding: 20px;
-      border-radius: 12px;
-      max-width: 400px;
-      margin: auto;
-    }
+    button { background: #00f0ff; color: black; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #00e0ee; }
+    header { display: flex; justify-content: space-between; align-items: center; background: #12121c; padding: 1rem 2rem; }
+    .btn { background: #2b2b42; color: white; padding: 10px 16px; margin-left: 8px; border: none; border-radius: 8px; }
+    .btn:hover { background: #3f3f5e; }
+    .info { margin-top: 8px; font-size: 14px; color: #aaa; text-align: center; }
   </style>
 </head>
 <body>
-  <h1>JWR Mini DEX</h1>
-  <button onclick="connectWallet('ethereum')">Connect MetaMask</button>
-  <button onclick="connectWallet('okxwallet')">Connect OKX</button>
-  <p id="walletAddress"></p>  <div class="card">
-    <h2>Add Liquidity</h2>
-    <input id="amountA" placeholder="Amount JWR" />
-    <input id="amountB" placeholder="Amount USDT" />
-    <button onclick="addLiquidity()">Add Liquidity</button>
-  </div>  <div class="card">
-    <h2>Swap</h2>
-    <select id="swapFrom">
-      <option value="0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3">JWR</option>
-      <option value="0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf">USDT</option>
-    </select>
-    <select id="swapTo">
-      <option value="0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3">JWR</option>
-      <option value="0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf">USDT</option>
-    </select>
-    <input id="swapAmount" placeholder="Amount to Swap" />
-    <button onclick="swapTokens()">Swap</button>
-  </div> 
-  <script>
+  <header>
+    <h2>JWR DEX</h2>
+    <div>
+      <button class="btn" onclick="connectWallet('ethereum')">MetaMask</button>
+      <button class="btn" onclick="connectWallet('okxwallet')">OKX</button>
+      <button class="btn" onclick="disconnectWallet()">Disconnect</button>
+    </div>
+  </header>  <div class="container">
+    <p id="walletAddress" style="text-align: center">Not connected</p>
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('liquidity')">Add Liquidity</div>
+      <div class="tab" onclick="showTab('swap')">Swap</div>
+      <div class="tab" onclick="showTab('pool')">Pool</div>
+    </div><div id="liquidity" class="card">
+  <h3>Add Liquidity</h3>
+  <input id="amountA" placeholder="Amount JWR" />
+  <input id="amountB" placeholder="Amount USDT" />
+  <button onclick="addLiquidity()">Add Liquidity</button>
+</div>
+
+<div id="swap" class="card" style="display:none">
+  <h3>Swap Tokens</h3>
+  <select id="swapFrom">
+    <option value="0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3">JWR</option>
+    <option value="0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf">USDT</option>
+  </select>
+  <select id="swapTo">
+    <option value="0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3">JWR</option>
+    <option value="0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf">USDT</option>
+  </select>
+  <input id="swapAmount" placeholder="Amount to Swap" oninput="estimateOutput()" />
+  <div class="info" id="estimateOut">Estimated output: -</div>
+  <button onclick="swapTokens()">Swap</button>
+</div>
+
+<div id="pool" class="card" style="display:none">
+  <h3>Pool Info</h3>
+  <p>Total JWR Liquidity: <span id="poolJWR">-</span></p>
+  <p>Total USDT Liquidity: <span id="poolUSDT">-</span></p>
+</div>
+
+  </div>  <script>
     let provider, signer, account;
+    const JWR = "0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3";
+    const USDT = "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf";
+    const ROUTER = "0xB91deeDbc60F3507D5206Df4E051A11b74C6158E";
+    const ABI_ERC20 = ["function approve(address spender, uint amount) external returns (bool)","function allowance(address owner, address spender) view returns (uint256)","function balanceOf(address) view returns (uint256)"];
+    const ABI_ROUTER = ["function swapExactTokensForTokens(uint,uint,address[],address,uint) external returns (uint[] memory)","function addLiquidity(address,address,uint,uint,uint,uint,address,uint) external returns (uint,uint,uint)"];
+
     async function connectWallet(source) {
       const wallet = window[source];
-      if (!wallet) {
-        alert(`Wallet ${source} not detected.`);
-        return;
-      }
-
-      const chainParams = {
-        chainId: "0x40d1", // 16601 - 0G Galileo
-        chainName: "0G-Galileo-Testnet",
-        nativeCurrency: {
-          name: "OG",
-          symbol: "OG",
-          decimals: 18,
-        },
-        rpcUrls: ["https://evmrpc-testnet.0g.ai/"],
-        blockExplorerUrls: ["https://chainscan-galileo.0g.ai/"],
-      };
-
+      if (!wallet) return alert("Wallet not detected: " + source);
+      const chain = { chainId: "0x40d1", chainName: "0G Galileo", nativeCurrency: { name: "OG", symbol: "OG", decimals: 18 }, rpcUrls: ["https://evmrpc-testnet.0g.ai/"] };
       try {
-        await wallet.request({
-          method: "wallet_addEthereumChain",
-          params: [chainParams],
-        });
-
+        await wallet.request({ method: "wallet_addEthereumChain", params: [chain] });
         provider = new ethers.BrowserProvider(wallet);
         signer = await provider.getSigner();
         account = await signer.getAddress();
-
-        document.getElementById("walletAddress").innerText = `Connected: ${account}`;
-        console.log("Connected to:", account);
-      } catch (err) {
-        console.error("Connect error:", err);
-        alert("Failed to connect wallet");
+        document.getElementById("walletAddress").innerText = "Connected: " + account;
+        updatePool();
+      } catch (e) {
+        alert("Connect failed: " + e.message);
       }
     }
-const JWR_TOKEN = "0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3";
-    const USDT_TOKEN = "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf";
-    const ROUTER = "0xB91deeDbc60F3507D5206Df4E051A11b74C6158E";
-    const ABI_ERC20 = [
-      "function approve(address spender, uint amount) external returns (bool)",
-      "function allowance(address owner, address spender) view returns (uint256)",
-      "function balanceOf(address) view returns (uint256)"
-    ];
-    const ABI_ROUTER = [
-      "function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory)",
-      "function addLiquidity(address tokenA, address tokenB, uint amountADesired, uint amountBDesired, uint amountAMin, uint amountBMin, address to, uint deadline) external returns (uint amountA, uint amountB, uint liquidity)"
-    ];
+
+    function disconnectWallet() {
+      provider = signer = account = null;
+      document.getElementById("walletAddress").innerText = "Not connected";
+    }
+
     async function addLiquidity() {
-      const amtA = ethers.parseUnits(document.getElementById("amountA").value, 18);
-      const amtB = ethers.parseUnits(document.getElementById("amountB").value, 18);
-      const tokenA = new ethers.Contract(JWR_TOKEN, ABI_ERC20, signer);
-      const tokenB = new ethers.Contract(USDT_TOKEN, ABI_ERC20, signer);
+      if (!signer) return alert("Connect wallet first");
+      const a = ethers.parseUnits(document.getElementById("amountA").value, 18);
+      const b = ethers.parseUnits(document.getElementById("amountB").value, 18);
+      const tokenA = new ethers.Contract(JWR, ABI_ERC20, signer);
+      const tokenB = new ethers.Contract(USDT, ABI_ERC20, signer);
       const router = new ethers.Contract(ROUTER, ABI_ROUTER, signer);
-
-      if ((await tokenA.allowance(account, ROUTER)) < amtA) await tokenA.approve(ROUTER, amtA);
-      if ((await tokenB.allowance(account, ROUTER)) < amtB) await tokenB.approve(ROUTER, amtB);
-
+      if ((await tokenA.allowance(account, ROUTER)) < a) await tokenA.approve(ROUTER, a);
+      if ((await tokenB.allowance(account, ROUTER)) < b) await tokenB.approve(ROUTER, b);
       const deadline = Math.floor(Date.now() / 1000) + 600;
-      await router.addLiquidity(JWR_TOKEN, USDT_TOKEN, amtA, amtB, 0, 0, account, deadline);
-      alert("Liquidity added!");
+      await router.addLiquidity(JWR, USDT, a, b, 0, 0, account, deadline);
+      alert("Liquidity added");
+      updatePool();
     }
 
     async function swapTokens() {
-      const amt = ethers.parseUnits(document.getElementById("swapAmount").value, 18);
+      if (!signer) return alert("Connect wallet first");
       const from = document.getElementById("swapFrom").value;
       const to = document.getElementById("swapTo").value;
-      const tokenFrom = new ethers.Contract(from, ABI_ERC20, signer);
+      const amt = ethers.parseUnits(document.getElementById("swapAmount").value, 18);
+      const token = new ethers.Contract(from, ABI_ERC20, signer);
       const router = new ethers.Contract(ROUTER, ABI_ROUTER, signer);
-
-      if ((await tokenFrom.allowance(account, ROUTER)) < amt) await tokenFrom.approve(ROUTER, amt);
-
+      if ((await token.allowance(account, ROUTER)) < amt) await token.approve(ROUTER, amt);
       const deadline = Math.floor(Date.now() / 1000) + 600;
       await router.swapExactTokensForTokens(amt, 0, [from, to], account, deadline);
-      alert("Swap sukses!");
+      alert("Swap successful");
+      updatePool();
     }
-  </script>
-</body>
+
+    function showTab(id) {
+      ["liquidity","swap","pool"].forEach(x => document.getElementById(x).style.display = id===x ? 'block' : 'none');
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab[onclick*='${id}']`).classList.add('active');
+    }
+
+    async function updatePool() {
+      const a = new ethers.Contract(JWR, ABI_ERC20, provider);
+      const b = new ethers.Contract(USDT, ABI_ERC20, provider);
+      const j = await a.balanceOf(ROUTER);
+      const u = await b.balanceOf(ROUTER);
+      document.getElementById("poolJWR").innerText = ethers.formatUnits(j, 18);
+      document.getElementById("poolUSDT").innerText = ethers.formatUnits(u, 18);
+    }
+
+    async function estimateOutput() {
+      const val = document.getElementById("swapAmount").value;
+      const from = document.getElementById("swapFrom").value;
+      const to = document.getElementById("swapTo").value;
+      if (!val || isNaN(val) || !provider) return;
+      try {
+        const input = ethers.parseUnits(val, 18);
+        const fromToken = new ethers.Contract(from, ABI_ERC20, provider);
+        const toToken = new ethers.Contract(to, ABI_ERC20, provider);
+        const fromBal = await fromToken.balanceOf(ROUTER);
+        const toBal = await toToken.balanceOf(ROUTER);
+        if (fromBal > 0n && toBal > 0n) {
+          const estOut = input * toBal / fromBal;
+          document.getElementById("estimateOut").innerText = `Estimated output: ${ethers.formatUnits(estOut, 18)}`;
+        }
+      } catch {
+        document.getElementById("estimateOut").innerText = "Estimated output: -";
+      }
+    }
+  </script></body>
 </html>
