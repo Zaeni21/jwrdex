@@ -47,9 +47,46 @@
     </select>
     <input id="swapAmount" placeholder="Amount to Swap" />
     <button onclick="swapTokens()">Swap</button>
-  </div>  <script>
+  </div> 
+  <script>
     let provider, signer, account;
-    const JWR_TOKEN = "0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3";
+    async function connectWallet(source) {
+      const wallet = window[source];
+      if (!wallet) {
+        alert(`Wallet ${source} not detected.`);
+        return;
+      }
+
+      const chainParams = {
+        chainId: "0x40d1", // 16601 - 0G Galileo
+        chainName: "0G-Galileo-Testnet",
+        nativeCurrency: {
+          name: "OG",
+          symbol: "OG",
+          decimals: 18,
+        },
+        rpcUrls: ["https://evmrpc-testnet.0g.ai/"],
+        blockExplorerUrls: ["https://chainscan-galileo.0g.ai/"],
+      };
+
+      try {
+        await wallet.request({
+          method: "wallet_addEthereumChain",
+          params: [chainParams],
+        });
+
+        provider = new ethers.BrowserProvider(wallet);
+        signer = await provider.getSigner();
+        account = await signer.getAddress();
+
+        document.getElementById("walletAddress").innerText = `Connected: ${account}`;
+        console.log("Connected to:", account);
+      } catch (err) {
+        console.error("Connect error:", err);
+        alert("Failed to connect wallet");
+      }
+    }
+const JWR_TOKEN = "0x4E54B5aeB805D826a6c1Ad8abC9cBf05E49457c3";
     const USDT_TOKEN = "0x3eC8A8705bE1D5ca90066b37ba62c4183B024ebf";
     const ROUTER = "0xB91deeDbc60F3507D5206Df4E051A11b74C6158E";
     const ABI_ERC20 = [
@@ -61,30 +98,6 @@
       "function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external returns (uint[] memory)",
       "function addLiquidity(address tokenA, address tokenB, uint amountADesired, uint amountBDesired, uint amountAMin, uint amountBMin, address to, uint deadline) external returns (uint amountA, uint amountB, uint liquidity)"
     ];
-
-    async function connectWallet(source) {
-      const wallet = window[source];
-      if (!wallet) return alert("Wallet " + source + " not detected");
-
-      const chainParams = {
-        chainId: "0x40d1",
-        chainName: "0G-Galileo-Testnet",
-        nativeCurrency: { name: "OG", symbol: "OG", decimals: 18 },
-        rpcUrls: ["https://evmrpc-testnet.0g.ai/"],
-        blockExplorerUrls: ["https://chainscan-galileo.0g.ai/"]
-      };
-
-      try {
-        await wallet.request({ method: "wallet_addEthereumChain", params: [chainParams] });
-        provider = new ethers.BrowserProvider(wallet);
-        signer = await provider.getSigner();
-        account = await signer.getAddress();
-        document.getElementById("walletAddress").innerText = "Connected: " + account;
-      } catch (err) {
-        alert("Failed to connect: " + err.message);
-      }
-    }
-
     async function addLiquidity() {
       const amtA = ethers.parseUnits(document.getElementById("amountA").value, 18);
       const amtB = ethers.parseUnits(document.getElementById("amountB").value, 18);
